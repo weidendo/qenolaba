@@ -309,6 +309,7 @@ void Board::generateMoves(MoveList& list)
 {
     int actField, f;
 
+    list.clear();
     for(f=0;f<RealFields;f++) {
 	actField = order[f];
 	if ( field[actField] == color)
@@ -835,6 +836,9 @@ int Board::calcEvaluation()
 
     int f,i,j;
 
+    // if not yet set, use default scheme
+    if (!_evalScheme) setEvalScheme();
+
     /* different evaluation types */
     int fieldValueSum=0, stoneValueSum=0;
     int moveValueSum=0, inARowValueSum=0;
@@ -1201,10 +1205,8 @@ Move& Board::bestMove()
     int alpha=-15000,beta=15000;
     int nalpha,nbeta, actValue;
 
-    if (!_evalScheme) {
-	// Use default values if not set
-	setEvalScheme();
-    }
+    // if not yet set, use default scheme
+    if (!_evalScheme) setEvalScheme();
 
     pv.clear(realMaxDepth);
     _bestMove.type = Move::none;

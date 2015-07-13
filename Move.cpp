@@ -25,12 +25,12 @@ const QString nameOfDir(int dir)
 {
     dir = dir % 6;
     switch(dir) {
+    case 0: return QObject::tr("RightUp");
     case 1: return QObject::tr("Right");
     case 2: return QObject::tr("RightDown");
     case 3: return QObject::tr("LeftDown");
     case 4: return QObject::tr("Left");
     case 5: return QObject::tr("LeftUp");
-    case 6: return QObject::tr("RightUp");
     default: break;
     }
     return QString("??");

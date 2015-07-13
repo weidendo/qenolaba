@@ -41,10 +41,13 @@ public:
     { field = f; direction = d, type = t; }
 
 
+    bool isValid() const
+    { return type < none; }
     bool isOutMove() const
     { return type <= out1with2; }
     bool isPushMove() const
     { return type <= push1with2; }
+
     static int maxOutType()
     { return out1with2; }
     static int maxPushType()

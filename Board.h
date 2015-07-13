@@ -16,7 +16,8 @@
    Boston, MA 02110-1301, USA.
 */
 
-/* Board represents a game state
+/*
+ *  Board represents a game state
  * - play/take back moves
  * - generate allowed moves
  * - calculate rating for position
@@ -105,7 +106,7 @@ public:
     void showHist();
 
     /* Evaluation Scheme to use */
-    void setEvalScheme( EvalScheme* scheme = 0);
+    void setEvalScheme(EvalScheme* scheme = 0);
     EvalScheme* evalScheme() { return _evalScheme; }
 
     /* Calculate a value for actual position

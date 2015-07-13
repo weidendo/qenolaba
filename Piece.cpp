@@ -223,6 +223,11 @@ BallAnimation::BallAnimation(int s, Ball* ball1, Ball* ball2)
     balls.append( new Ball( c2,a2 ) );
 }
 
+BallAnimation::~BallAnimation()
+{
+    qDeleteAll(balls);
+}
+
 
 /* Class BallPosition */
 BallPosition::BallPosition(int xp,int yp, Ball* d)
@@ -441,10 +446,9 @@ void BallWidget::animate()
 }
 
 
+/* Test Ball widget */
 
-/* Ball Test */
-
-
+/* Include test into regular compilation to moc happy */
 BallTest::BallTest( QWidget *parent )
     : BallWidget(10,2,parent)
 {
@@ -494,9 +498,12 @@ void BallTest::mouseReleaseEvent( QMouseEvent * )
     stopAnimation(3);
 }
 
-/* Test... */
+#ifdef PIECE_TEST
+
+/* Test Ball widget */
 
 #include <QApplication>
+
 int main(int argc, char *argv[])
 {
     // set zoom, flip, limit
@@ -509,3 +516,4 @@ int main(int argc, char *argv[])
     return app.exec();
 }
 
+#endif // PIECE_TEST

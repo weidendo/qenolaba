@@ -79,6 +79,7 @@ private:
 class BallAnimation {
 public:
     BallAnimation(int s, Ball*, Ball*);
+    ~BallAnimation();
 
     int steps;
     QList<Ball*> balls;
@@ -151,8 +152,6 @@ public:
 protected:
     void mousePressEvent( QMouseEvent * );
     void mouseReleaseEvent( QMouseEvent * );
-
-
 };
 
 #endif // _PIECE_H_
