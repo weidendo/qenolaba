@@ -1394,8 +1394,9 @@ int Board::setASCIIState(const QString& state)
 {
     int moveNo=-1, index;
     int len = state.length();
-    int color1Count = 0;
-    int color2Count = 0;
+
+    color1Count = 0;
+    color2Count = 0;
 
     /* get moveNo if supplied */
     if ((index = state.indexOf("#"))>=0)

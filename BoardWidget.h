@@ -127,18 +127,24 @@ private:
 
 /* Test BoardWidget */
 
+class Network;
+
 class TestGame: public QObject
 {
     Q_OBJECT
 public:
-    TestGame();
+    TestGame(Network*);
+    void initInput();
 
     Board b;
     MoveList l;
     BoardWidget w;
+    Network* _n;
+    int moveNo;
 
 public slots:
     void draw(Move& m);
+    void newPosition(const char*);
 };
 
 

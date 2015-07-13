@@ -597,11 +597,16 @@ void BoardWidget::showStart(const Move& m, int step, bool updateGUI)
 
 
 void BoardWidget::choseMove(MoveList *pl)
-{ 
-    if (!gettingMove && pl != 0) {
+{
+    if (gettingMove) {
+	// reset state
+	updatePosition(true);
+	gettingMove = false;
+    }
+    mbDown = false;
+    if (pl != 0) {
 	pList = pl;
 	gettingMove = true;
-	mbDown = false;
 	actValue = - board.calcEvaluation();
 	qDebug() << "Chose Move...";
     }
@@ -862,7 +867,7 @@ void BoardWidget::mousePressEvent( QMouseEvent* pEvent )
     }
 
     startValid = isValidStart(pos, (pEvent->button() == Qt::MidButton));
-    qDebug() << "Start pos " << pos << " is valid: " << startValid;
+    //qDebug() << "Start pos " << pos << " is valid: " << startValid;
     //  actMove.print();
 
     if (!startValid) return;
@@ -889,11 +894,10 @@ void BoardWidget::mouseMoveEvent( QMouseEvent* pEvent )
     if (editMode) {
 	int f = fieldOf(pos);
 	if (field[f] != Board::out && field[f] != editColor) {
-	    int newColor = (editColor == Board::color1) ? Board::color1bright :
-							  (editColor == Board::color2) ? Board::color2bright :
-											 (field[f] == Board::color1) ? Board::color1bright :
-														       (field[f] == Board::color2) ? Board::color2bright : field[f];
-	    field[f] = newColor;
+	    if      (editColor == Board::color1) field[f] = Board::color1bright;
+	    else if (editColor == Board::color2) field[f] = Board::color2bright;
+	    else if (field[f] == Board::color1)  field[f] = Board::color1bright;
+	    else if (field[f] == Board::color2)  field[f] = Board::color2bright;
 
 	    if (renderMode) updateBalls();
 	    update();
@@ -1018,31 +1022,65 @@ QSize  BoardWidget::sizeHint() const
 
 /* Test BoardWidget */
 
-TestGame::TestGame()
+#include "Network.h"
+
+TestGame::TestGame(Network* n)
     : w(b)
 {
+    _n = n;
+    moveNo = 0;
+
+    connect(&w, SIGNAL(moveChoosen(Move&)), SLOT(draw(Move&)));
+    connect(n, SIGNAL(gotPosition(const char*)),
+	    SLOT(newPosition(const char*)));
+
     w.renderBalls(true);
     b.begin(Board::color1);
-    connect(&w, SIGNAL(moveChoosen(Move&)), SLOT(draw(Move&)));
-    Move m;
-    draw(m);
     w.show();
+
+    if (_n) _n->broadcast(qPrintable(b.getASCIIState(moveNo)));
+    initInput();
 }
 
-void TestGame::draw(Move& m) {
-    if (m.isValid()) b.playMove(m);
+void TestGame::initInput()
+{
+    qDebug("%s", qPrintable(b.getASCIIState(moveNo)));
     qDebug() << "Evaluation:" << b.calcEvaluation();
+
     b.generateMoves(l);
     w.choseMove(&l);
     w.updatePosition(true);
 }
 
+void TestGame::draw(Move& m)
+{
+    if (m.isValid()) {
+	b.playMove(m);
+	moveNo++;
+	if (_n) _n->broadcast(qPrintable(b.getASCIIState(moveNo)));
+    }
+    initInput();
+}
+
+void TestGame::newPosition(const char* p)
+{
+    QString s(p);
+    moveNo = b.setASCIIState(s);
+    b.setActColor( ((moveNo%2)==0) ? Board::color1 : Board::color2);
+    qDebug("Got new position from network...");
+    initInput();
+}
+
+//#ifdef BOARDWIDGET_TEST
+
 #include <QApplication>
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    TestGame g;
+    Network n;
+    TestGame g(&n);
 
     return app.exec();
 }
-
+//#endif

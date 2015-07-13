@@ -36,6 +36,9 @@ public:
 		    left2, right2, move2, move1, none };
     enum { typeCount = none };
 
+    static QString nameOfDir(int);
+    static QString nameOfPos(int);
+
     Move() { type = none; }
     Move(short f, char d, MoveType t)
     { field = f; direction = d, type = t; }

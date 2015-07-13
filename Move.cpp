@@ -21,7 +21,7 @@
 
 #include <QObject>
 
-const QString nameOfDir(int dir)
+QString Move::nameOfDir(int dir)
 {
     dir = dir % 6;
     switch(dir) {
@@ -36,7 +36,7 @@ const QString nameOfDir(int dir)
     return QString("??");
 }
 
-QString nameOfPos(int p)
+QString Move::nameOfPos(int p)
 {
     static char tmp[3];
     tmp[0] = 'A' + (p-12)/11;
