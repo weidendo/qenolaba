@@ -35,7 +35,14 @@
 
 #include <QSocketNotifier>
 
-Listener::Listener(const char* h, int p, struct sockaddr_in s,bool r)
+Listener::Listener(const char* h, struct sockaddr_in s, bool r)
+{
+    setHost(h);
+    sin = s;
+    reachable = r;
+}
+
+void Listener::setHost(const char* h)
 {
     if (h==0)
 	host[0]=0;
@@ -45,9 +52,11 @@ Listener::Listener(const char* h, int p, struct sockaddr_in s,bool r)
 	strncpy(host, h, l);
 	host[l] = 0;
     }
-    port = p;
-    sin = s;
-    reachable = r;
+}
+
+int Listener::port()
+{
+    return ntohs(sin.sin_port);
 }
 
 Network::Network(int port)
@@ -64,21 +73,19 @@ Network::Network(int port)
 	name.sin_addr.s_addr = htonl (INADDR_ANY);
 	if (bind (fd, (struct sockaddr *) &name, sizeof (name)) >= 0)
 	    break;
-	//    printf("...Port %d in use\n", port+i);
+	//    qDebug("...Port %d in use\n", port+i);
     }
     mySin = name;
-    //  printf("I'm using Port %d\n", port+i);
+    //  qDebug("I'm using Port %d\n", port+i);
     if (i==5) {
-	printf("Error in bind to port %d\n", port);
+	qDebug("Error in bind to port %d\n", port);
 	close(fd);
 	fd = -1;
 	return;
     }
-    for(j = 0; j<i;j++)
-	addListener("127.0.0.1", port+j);
 
     if (::listen(fd,5)<0) {
-	printf("Error in listen\n");
+	qDebug("Error in listen\n");
 	close(fd);
 	fd = -1;
 	return;
@@ -87,6 +94,10 @@ Network::Network(int port)
     sn = new QSocketNotifier( fd, QSocketNotifier::Read );
     QObject::connect( sn, SIGNAL(activated(int)),
 		      this, SLOT(gotConnection()) );
+    sentPos = 0;
+
+    for(j = 0; j<i;j++)
+	addListener("127.0.0.1", port+j);
 }
 
 Network::~Network()
@@ -107,6 +118,14 @@ Network::~Network()
     delete sn;
 }
 
+Listener* Network::listenerMatch(struct sockaddr_in sin)
+{
+    foreach (Listener* l, listeners)
+	if (l->sin.sin_addr.s_addr == sin.sin_addr.s_addr &&
+	    l->sin.sin_port == sin.sin_port) return l;
+    return 0;
+}
+
 void Network::gotConnection()
 {
     static char tmp[1024];
@@ -114,45 +133,58 @@ void Network::gotConnection()
     struct sockaddr_in sin;
     socklen_t sz = sizeof (sin);
 
-    //  printf("GotConnection: ");
+    if (fd<0) {
+	qDebug("Error: gotConnection without valid network?");
+	return;
+    }
+
+    //  qDebug("GotConnection: ");
     int s = accept(fd,(struct sockaddr *)&sin, &sz);
     if (s<0) {
-	printf("Error in accept\n");
+	qDebug("Error in accept\n");
 	return;
     }
     while(read(s, tmp+len, 1)==1) len++;
     close(s);
     tmp[len]=0; len++;
-    //  printf("Got: '%s'\n",tmp);
+    //  qDebug("Got: '%s'\n",tmp);
     if (strncmp(tmp,"reg ",4)==0) {
 	int port = atoi(tmp+4);
 	sin.sin_port = htons( port );
-	Listener *l = new Listener(0,0,sin);
-	//    printf("Reg of 0x%x:%d\n",
+	Listener* l = listenerMatch(sin);
+	if (l)
+	    l->reachable = true;
+	else {
+	    l = new Listener(0,sin);
+	    listeners.append(l);
+	}
+	//    qDebug("Reg of 0x%x:%d\n",
 	//	   ntohl(sin.sin_addr.s_addr ), ntohs(sin.sin_port));
-	listeners.append(l);
+
+	if (sentPos)
+	    l->reachable = sendString(l->sin, sentPos, sentLen);
+
 	return;
     }
 
     if (strncmp(tmp,"unreg ",6)==0) {
 	int port = atoi(tmp+6);
 	sin.sin_port = htons( port );
-	foreach (Listener* l, listeners) {
-	    if (l->sin.sin_addr.s_addr == sin.sin_addr.s_addr &&
-		l->sin.sin_port == sin.sin_port) {
-		listeners.removeOne(l);
-		delete l;
-		//    printf("UnReg of 0x%x:%d\n",
-		//	   ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port));
-		return;
-	    }
+	Listener* l = listenerMatch(sin);
+	if (l) {
+	    listeners.removeOne(l);
+	    delete l;
+	    //    qDebug("UnReg of 0x%x:%d\n",
+	    //	   ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port));
 	}
-	printf("Error: UnReg of 0x%x:%d. Not Found\n",
-	       ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port));
+	else
+	    qDebug("Error: UnReg of 0x%x:%d. Not Found\n",
+		   ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port));
 	return;
     }
 
     if (strncmp(tmp,"pos ",4)==0) {
+	sentPos = 0;
 	emit gotPosition(tmp+4);
     }
 }
@@ -160,27 +192,34 @@ void Network::gotConnection()
 void Network::addListener(const char* host, int port)
 {
     struct hostent *hostinfo;
-    struct sockaddr_in name;
+    struct sockaddr_in sin;
 
-    memset(&name, 0, sizeof(struct sockaddr_in));
-    name.sin_family = AF_INET;
-    name.sin_port = htons (port);
+    memset(&sin, 0, sizeof(struct sockaddr_in));
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(port);
     hostinfo = gethostbyname (host);
     if (hostinfo == NULL) {
-	printf ("Error in addListener: Unknown host %s.\n", host);
+	qDebug ("Error in addListener: Unknown host %s.\n", host);
 	return;
     }
-    name.sin_addr = *(struct in_addr *) hostinfo->h_addr;
+    sin.sin_addr = *(struct in_addr *) hostinfo->h_addr;
 
-    Listener *l = new Listener(host,port,name);
-    //  printf("Added Listener %s, 0x%x:%d\n",
-    //	 host, ntohl(name.sin_addr.s_addr), ntohs(name.sin_port));
-    listeners.append(l);
+    Listener* l = listenerMatch(sin);
+    if (l) {
+	l->reachable = true;
+	l->setHost(host);
+    }
+    else {
+	l = new Listener(host, sin);
+	listeners.append(l);
+	//  qDebug("Added Listener %s, 0x%x:%d\n",
+	//	 host, ntohl(name.sin_addr.s_addr), ntohs(name.sin_port));
+    }
 
     char tmp[50];
     int len = sprintf(tmp, "reg %d", ntohs(mySin.sin_port));
 
-    if (!sendString( name, tmp, len)) {
+    if (!sendString( sin, tmp, len)) {
 	listeners.removeOne(l);
 	delete l;
     }
@@ -188,30 +227,33 @@ void Network::addListener(const char* host, int port)
 
 void Network::broadcast(const char* pos)
 {
-    char tmp[1024];
+    static char tmp[1024];
     int len = sprintf(tmp,"pos %s", pos);
 
     foreach (Listener* l, listeners) {
 	if (l->reachable)
 	    l->reachable = sendString(l->sin, tmp, len);
     }
+
+    sentPos = tmp;
+    sentLen = len;
 }
 
-bool Network::sendString(struct sockaddr_in sin, char* str, int len)
+bool Network::sendString(struct sockaddr_in sin, const char* str, int len)
 {
     int s = ::socket (PF_INET, SOCK_STREAM, 0);
     if (s<0) {
-	printf("Error in sendString/socket ??\n");
+	qDebug("Error in sendString/socket ??\n");
 	return false;
     }
     if (::connect (s, (struct sockaddr *)&sin, sizeof (sin)) <0) {
-	printf("Error in sendString/connect to socket 0x%x:%d\n",
+	qDebug("Error in sendString/connect to socket 0x%x:%d\n",
 	       ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port) );
 	return false;
     }
     write(s, str, len);
     close(s);
-    //  printf("Send '%s' to 0x%x:%d\n", str,
+    //  qDebug("Send '%s' to 0x%x:%d\n", str,
     //	 ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port) );
     return true;
 }

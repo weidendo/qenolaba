@@ -34,10 +34,12 @@
 
 class Listener {
 public:
-    Listener(const char*,int,struct sockaddr_in,bool=true);
+    Listener(const char*, struct sockaddr_in, bool=true);
+
+    void setHost(const char*);
+    int port();
 
     char host[100];
-    int port;
     struct sockaddr_in sin;
     bool reachable;
 };
@@ -67,12 +69,15 @@ private slots:
     void gotConnection();
 
 private:
-    bool sendString(struct sockaddr_in sin, char* str, int len);
+    bool sendString(struct sockaddr_in sin, const char* str, int len);
+    Listener *listenerMatch(sockaddr_in sin);
 
     QList<Listener*> listeners;
     struct sockaddr_in mySin;
     int fd, myPort;
     QSocketNotifier *sn;
+    const char* sentPos;
+    int sentLen;
 };
 
 #endif // _NETWORK_H_

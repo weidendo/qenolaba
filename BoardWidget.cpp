@@ -1028,23 +1028,18 @@ TestGame::TestGame(Network* n)
     : w(b)
 {
     _n = n;
-    moveNo = 0;
 
     connect(&w, SIGNAL(moveChoosen(Move&)), SLOT(draw(Move&)));
     connect(n, SIGNAL(gotPosition(const char*)),
 	    SLOT(newPosition(const char*)));
 
     w.renderBalls(true);
-    b.begin(Board::color1);
     w.show();
-
-    if (_n) _n->broadcast(qPrintable(b.getASCIIState(moveNo)));
-    initInput();
 }
 
 void TestGame::initInput()
 {
-    qDebug("%s", qPrintable(b.getASCIIState(moveNo)));
+    qDebug("%s", qPrintable(b.getState()));
     qDebug() << "Evaluation:" << b.calcEvaluation();
 
     b.generateMoves(l);
@@ -1052,12 +1047,20 @@ void TestGame::initInput()
     w.updatePosition(true);
 }
 
+void TestGame::startOnEmpty()
+{
+    if (b.isValid()) return;
+
+    b.begin(Board::color1);
+    if (_n) _n->broadcast(qPrintable(b.getState()));
+    initInput();
+}
+
 void TestGame::draw(Move& m)
 {
     if (m.isValid()) {
 	b.playMove(m);
-	moveNo++;
-	if (_n) _n->broadcast(qPrintable(b.getASCIIState(moveNo)));
+	if (_n) _n->broadcast(qPrintable(b.getState()));
     }
     initInput();
 }
@@ -1065,8 +1068,7 @@ void TestGame::draw(Move& m)
 void TestGame::newPosition(const char* p)
 {
     QString s(p);
-    moveNo = b.setASCIIState(s);
-    b.setActColor( ((moveNo%2)==0) ? Board::color1 : Board::color2);
+    b.setState(s);
     qDebug("Got new position from network...");
     initInput();
 }
@@ -1074,12 +1076,16 @@ void TestGame::newPosition(const char* p)
 //#ifdef BOARDWIDGET_TEST
 
 #include <QApplication>
+#include <QTimer>
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     Network n;
     TestGame g(&n);
+
+    // if not received a position from network we start ourself
+    QTimer::singleShot(1000, &g, SLOT(startOnEmpty()));
 
     return app.exec();
 }

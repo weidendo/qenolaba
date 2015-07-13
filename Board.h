@@ -121,11 +121,13 @@ public:
     void setColor1Count(int c) { color1Count = c; }
     void setColor2Count(int c) { color2Count = c; }
     void setField(int i, int v) { field[i] = v; }
+    void setMoveNo(int n) { moveNo = n; }
 
     void setSpyLevel(int);
 
-    int getColor1Count() 	  { return color1Count; }
-    int getColor2Count() 	  { return color2Count; }
+    int getColor1Count() { return color1Count; }
+    int getColor2Count() { return color2Count; }
+    int getMoveNo() { return moveNo; }
 
     enum { empty=0, valid, invalid };
     int validState();
@@ -145,18 +147,14 @@ public:
     Move randomMove();
     void stopSearch() { breakOut = true; }
 
-    /* Compressed ASCII representation */
-    QString getState(int);
-    int setState(QString&);
-
-    /* Readable ASCII representation */
-    QString getASCIIState(int);
-    int setASCIIState(const QString&);
+    /* Readable representation */
+    QString getState();
+    bool setState(const QString&);
 
     void updateSpy(bool b) { bUpdateSpy = b; }
 
     /* simple terminal view of position */
-    void print(int);
+    void print();
 
     static int fieldDiffOfDir(int d) { return direction[d]; }
 
@@ -181,6 +179,7 @@ private:
     int field[AllFields];         /* actual board */
     int color1Count, color2Count;
     int color;                    /* actual color */
+    int moveNo;                   /* move number in half-moves */
     Move storedMove[MvsStored];   /* stored moves */
     int storedFirst, storedLast;  /* stored in ring puffer manner */
 

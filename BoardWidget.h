@@ -140,9 +140,9 @@ public:
     MoveList l;
     BoardWidget w;
     Network* _n;
-    int moveNo;
 
 public slots:
+    void startOnEmpty();
     void draw(Move& m);
     void newPosition(const char*);
 };

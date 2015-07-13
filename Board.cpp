@@ -171,6 +171,7 @@ void Board::begin(int startColor)
     storedFirst = storedLast = 0;
     color = startColor;
     color1Count = color2Count = 14;
+    moveNo = 0;
 }
 
 void Board::clear()
@@ -181,6 +182,7 @@ void Board::clear()
 	field[i] = (startBoard[i] == out) ? out: free;
     storedFirst = storedLast = 0;
     color1Count = color2Count = 0;
+    moveNo = 0;
 }
 
 /* generate moves starting at field <startField> */
@@ -458,9 +460,9 @@ void Board::playMove(const Move& m)
 
     /* change actual color */
     color = opponent;
+    moveNo++;
 
     CHECK( isConsistent() );
-
 }
 
 bool Board::takeBack()
@@ -475,6 +477,7 @@ bool Board::takeBack()
 
     /* change actual color */
     color = (color == color1) ? color2:color1;
+    moveNo--;
 
     if (m.isOutMove()) {
 	if (color == color1)
@@ -1335,47 +1338,28 @@ Move Board::randomMove()
 }
 
 
-void Board::print(int )
+void Board::print()
 {
-    int row,i;
-    char spaces[]="      ";
-    const char *z[]={". ","O ","X ", "o ", "x "};
-
-    qDebug("\n       -----------\n");
-    for(row=0;row<4;row++) {
-	qDebug("%s/ ",spaces+row);
-	for(i=0;i<5+row;i++) qDebug("%s",z[field[row*11+12+i]]);
-	qDebug("\\\n");
-    }
-    qDebug("  | ");
-    for(i=0;i<9;i++) qDebug("%s",z[field[56+i]]);
-    qDebug("|\n");
-    for(row=0;row<4;row++) {
-	qDebug("%s\\ ",spaces+3-row);
-	for(i=0;i<8-row;i++) qDebug("%s",z[field[68+row*12+i]]);
-	qDebug("/\n");
-    }
-    qDebug("       -----------     O: %d  X: %d\n",
-	   color1Count, color2Count);
+    qDebug("%s", qPrintable(getState()));
 }
 
-QString Board::getASCIIState(int moveNo)
+QString Board::getState()
 {
     QString state, tmp;
 
     int row,i;
-    char spaces[]="      ";
+    char spaces[]="       ";
     const char *z[]={". ","O ","X ", "o ", "x "};
 
-    state += tmp.sprintf("\n #%-3d  -----------     O: %d  X: %d\n",
-			 moveNo, color1Count, color2Count);
+    state += tmp.sprintf("\n#%-3d %c  -----------   O: %d  X: %d\n",
+			 moveNo, z[color][0], color1Count, color2Count);
     for(row=0;row<4;row++) {
 	state += tmp.sprintf("%s/ ",spaces+row);
 	for(i=0;i<5+row;i++)
 	    state += tmp.sprintf("%s",z[field[row*11+12+i]]);
 	state += "\\\n";
     }
-    state += "  | ";
+    state += "   | ";
     for(i=0;i<9;i++)
 	state += tmp.sprintf("%s",z[field[56+i]]);
     state += "|\n";
@@ -1385,25 +1369,37 @@ QString Board::getASCIIState(int moveNo)
 	    state += tmp.sprintf("%s",z[field[68+row*12+i]]);
 	state += "/\n";
     }
-    state += "       -----------\n\n";
+    state += "       -----------\n";
 
     return state;
 }
 
-int Board::setASCIIState(const QString& state)
+bool Board::setState(const QString& state)
 {
-    int moveNo=-1, index;
+    int index;
     int len = state.length();
+    char c = ' ';
 
     color1Count = 0;
     color2Count = 0;
 
-    /* get moveNo if supplied */
-    if ((index = state.indexOf("#"))>=0)
-	moveNo = state.mid(index+1,3).toInt();
+    if ((index = state.indexOf("#"))<0) return false;
+
+    moveNo = state.mid(index+1,3).toInt();
+    int newColor = 0;
+    while(++index<len) {
+	c = state[index].toLatin1();
+	if ((c == '-') || (c == '\n')) break;
+	if (c == 'O') newColor = 1; break;
+	if (c == 'X') newColor = 2; break;
+    }
+    // if color not given, assume that O started the game
+    if (newColor != 0)
+	color = newColor;
+    else
+	color = ((moveNo%2)==0) ? 1 : 2;
 
     int f=12, row=0, rowEnd = 17;
-    char c = ' ';
 
     index=state.indexOf("/");
 
@@ -1430,6 +1426,9 @@ int Board::setASCIIState(const QString& state)
 	    continue;
 	}
 
+	// not enough fields provided in this row?
+	if (c == '\n') return false;
+
 	if (f == rowEnd) {
 	    row++;
 	    if (row <4) {
@@ -1448,56 +1447,13 @@ int Board::setASCIIState(const QString& state)
 		rowEnd = 21 + row*11;
 	    }
 	    else
-		break;
-	    //      qDebug("Row %d: %d - %d, Idx %d\n", row, f, rowEnd, index);
+		return true;
+	    // qDebug("Row %d: %d - %d, Idx %d\n", row, f, rowEnd, index);
 	}
     }
-    return moveNo;
+    return false;
 }
 
-
-QString Board::getState(int moveNo)
-{
-    QString state;
-    QString entry, tmp;
-    int i;
-
-    /* Color + Counts */
-    state += (char) ('A' + moveNo /25 );
-    state += (char) ('A' + moveNo %25 );
-    state += (char) ('A' + color1Count);
-    state += (char) ('A' + color2Count);
-    state += (char) ('A' + 4*color + field[order[0]]);
-
-    /* Board (field values can be 0-3; 2 fields coded in one char */
-    for(i=1;i<61;i+=2)
-	state+= (char) ('A' + 4*field[order[i]] + field[order[i+1]] );
-
-    /* -> 35 chars */
-    return state;
-}
-
-int Board::setState(QString& _state)
-{
-    int moveNo;
-    const char *state = _state.toAscii();
-
-    if (_state.length() != 35) return 0;
-
-    moveNo = 25*(state[0] - 'A') + (state[1] - 'A');
-    color1Count = state[2] - 'A';
-    color2Count = state[3] - 'A';
-    color = (state[4] - 'A') / 4;
-    field[order[0]] = (state[4] - 'A') %4;
-
-    int i = 1;
-    for(int j = 5; j<35; j++) {
-	int w = state[j] - 'A';
-	field[order[i++]] = w/4;
-	field[order[i++]] = w % 4;
-    }
-    return moveNo;
-}
 
 void Board::setSpyLevel(int level)
 {
