@@ -1220,16 +1220,16 @@ Move& Board::bestMove()
     spyDepth = 0;
 
     if (spyLevel>0)
-	qDebug("\n> New Search\n>\n");
+	qDebug("\n> New Search\n>");
 
     do {
 	if (spyLevel>0)
-	    qDebug(">   MaxDepth: %d\n>\n", maxDepth);
+	    qDebug(">   MaxDepth: %d\n>", maxDepth);
 
 	// ShowTiefe(maxtiefe);
 	do {
 	    if (spyLevel>0)
-		qDebug(">     AB-Window: (%d ... %d)\n>\n", alpha, beta);
+		qDebug(">     AB-Window: (%d ... %d)\n>", alpha, beta);
 
 	    nalpha=alpha, nbeta=beta;
 	    inPrincipalVariation = (pv[0].type != Move::none);
@@ -1250,20 +1250,20 @@ Move& Board::bestMove()
 	    {
 		int i;
 		if (spyLevel>1)
-		    qDebug(">\n");
+		    qDebug(">");
 		qDebug(">      Got PV with Rating %d:",actValue);
 		for(i=0;i<=maxDepth;i++) {
-		    qDebug("\n>          D %d: %s", i, qPrintable(pv[i].name()));
+		    qDebug(">          D %d: %s", i, qPrintable(pv[i].name()));
 		}
-		qDebug("\n>\n");
+		qDebug(">");
 
-		qDebug(">      Search called    : %6d / %d Cutoffs\n",
+		qDebug(">      Search called    : %6d / %d Cutoffs",
 		       searchCalled, cutoffCount);
-		qDebug(">       Moves generated : %6d / %d Played\n",
+		qDebug(">       Moves generated : %6d / %d Played",
 		       moveCount, normalCount+pushCount+outCount);
-		qDebug(">        Nrml/Push/Out  : %6d / %d / %d\n",
+		qDebug(">        Nrml/Push/Out  : %6d / %d / %d",
 		       normalCount,pushCount,outCount);
-		qDebug(">       Positions rated : %6d / %d Won\n>\n",
+		qDebug(">       Positions rated : %6d / %d Won\n>",
 		       ratedPositions+wonPositions, wonPositions);
 
 	    }
@@ -1310,7 +1310,7 @@ Move& Board::bestMove()
     if (spyLevel==0)
 	changeEvaluation();
     else {
-	qDebug(">>> Got Move : %s\n\n",qPrintable(pv[0].name()));
+	qDebug(">>> Got Move : %s\n",qPrintable(pv[0].name()));
     }
 
     spyDepth = 0;

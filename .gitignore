@@ -1,5 +1,6 @@
 *.o
 moc_*.cpp
+qrc_*.cpp
 Makefile
 qenolaba.pro.user
 qenolaba

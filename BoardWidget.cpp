@@ -1067,7 +1067,7 @@ void TestGame::newPosition(const char* p)
     initInput();
 }
 
-//#ifdef BOARDWIDGET_TEST
+#ifdef BOARDWIDGET_TEST
 
 #include <QApplication>
 #include <QTimer>
@@ -1082,4 +1082,4 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-//#endif
+#endif
