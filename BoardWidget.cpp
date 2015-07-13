@@ -214,7 +214,7 @@ void drawColor(QPainter *p, int x, int y, int r, QColor* c)
 void BoardWidget::drawBoard()
 {
     boardPM = QPixmap(width(), height());
-    boardPM.fill(this, 0,0);
+    boardPM.fill(*boardColor);
 
     QPainter p(&boardPM);
 

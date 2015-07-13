@@ -155,7 +155,7 @@ QString EvalScheme::ascii()
     QString res;
     int i;
 
-    res.sprintf("%s=%d", _name.toAscii().constData(), _stoneValue[1]);
+    res.sprintf("%s=%d", _name.toUtf8().constData(), _stoneValue[1]);
     for(i=1;i<6;i++)
 	res += QString(",%1").arg( _stoneValue[i] );
     for(i=0;i<Move::typeCount;i++)
