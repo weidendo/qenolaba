@@ -31,16 +31,16 @@
 #include <QWidget>
 #include <QPixmap>
 
-class BoardWidget : public BallWidget
+class BoardWidget : public PieceWidget
 {
     Q_OBJECT
 public:
     BoardWidget(Board&, QWidget *parent = 0);
     ~BoardWidget();
 
-    void createPos(int , int , int , Ball*);
-    void initBalls();
-    void updateBalls();
+    void createPos(int , int , int , Piece*);
+    void initPieces();
+    void updatePieces();
 
     virtual void resizeEvent(QResizeEvent *);
     virtual void paintEvent(QPaintEvent *);
@@ -48,7 +48,7 @@ public:
     virtual void mouseReleaseEvent( QMouseEvent* pEvent );
     virtual void mouseMoveEvent( QMouseEvent* pEvent );
 
-    void renderBalls(bool r);
+    void renderPieces(bool r);
 
     void choseMove(MoveList*);
 
@@ -122,7 +122,7 @@ private:
     QColor *boardColor, *redColor, *yellowColor, *redHColor, *yellowHColor;
     QCursor *arrowAll, *arrow[7];
 
-    Ball *n1, *n2, *h1, *h2, *d1, *d2; //, *e;
+    Piece *n1, *n2, *h1, *h2, *d1, *d2; //, *e;
 };
 
 /* Test BoardWidget */

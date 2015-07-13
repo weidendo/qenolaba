@@ -49,7 +49,7 @@ MainWindow::MainWindow(Network *n)
     _board = new Board();
     _board->setDepth(_computerDepth);
     _boardWidget = new BoardWidget(*_board);
-    _boardWidget->renderBalls(true);
+    _boardWidget->renderPieces(true);
     setCentralWidget(_boardWidget);
 
     connect(_boardWidget, SIGNAL(moveChoosen(Move&)),

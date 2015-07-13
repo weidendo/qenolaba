@@ -46,7 +46,7 @@
 #include "bitmaps/Arrow6Mask"
 
 BoardWidget::BoardWidget(Board& b, QWidget *parent)
-    : BallWidget(10,9,parent), board(b)
+    : PieceWidget(10,9,parent), board(b)
 {
     pList =0;
     gettingMove = false;
@@ -78,7 +78,7 @@ BoardWidget::BoardWidget(Board& b, QWidget *parent)
     redHColor    = new QColor("orange");
     yellowHColor = new QColor("green");
 
-    initBalls();
+    initPieces();
     updatePosition();
 }
 
@@ -101,22 +101,22 @@ void BoardWidget::configure()
 }
 
 
-void BoardWidget::createPos(int pos, int i, int j, Ball* b)
+void BoardWidget::createPos(int pos, int i, int j, Piece* b)
 {
     int x=(465*(2*(i)-(j))/9);
     int y=(500*19*(j)/100);
-    createBallPosition(pos, x,y, b);
+    createPiecePosition(pos, x,y, b);
 }
 
-void BoardWidget::initBalls()
+void BoardWidget::initPieces()
 {
-    n2 = new Ball( *yellowColor );
-    h2 = new Ball( *yellowHColor );
-    d2 = new Ball( *yellowHColor, 3.14/2 );
+    n2 = new Piece( *yellowColor );
+    h2 = new Piece( *yellowHColor );
+    d2 = new Piece( *yellowHColor, 3.14/2 );
 
-    n1 = new Ball( *redColor );
-    h1 = new Ball( *redHColor );
-    d1 = new Ball( *redHColor, 3.14/2 );
+    n1 = new Piece( *redColor );
+    h1 = new Piece( *redHColor );
+    d1 = new Piece( *redHColor, 3.14/2 );
 
     // e  = new Ball( white,0,0 );
     // e->setSpecials(.6,.85,.75);
@@ -145,10 +145,10 @@ void BoardWidget::initBalls()
 
 void BoardWidget::resizeEvent(QResizeEvent *e)
 {
-    BallWidget::resizeEvent(e);
+    PieceWidget::resizeEvent(e);
 
     drawBoard();
-    if (renderMode) updateBalls();
+    if (renderMode) updatePieces();
     update();
 }
 
@@ -269,7 +269,7 @@ void BoardWidget::paintEvent(QPaintEvent *)
     /* draw balls */
 
     if (renderMode) {
-	drawBalls(&p);
+	drawPieces(&p);
 	return;
     }
 
@@ -326,14 +326,14 @@ void BoardWidget::paintEvent(QPaintEvent *)
     }
 }
 
-void BoardWidget::renderBalls(bool r)
+void BoardWidget::renderPieces(bool r)
 {
     renderMode=r;
-    if (renderMode) updateBalls();
+    if (renderMode) updatePieces();
     update();
 }
 
-void BoardWidget::updateBalls()
+void BoardWidget::updatePieces()
 {
     int i,j;
 
@@ -395,7 +395,7 @@ void BoardWidget::updatePosition(bool updateGUI)
     boardOK     = true;
 
     if (updateGUI) {
-	if (renderMode) updateBalls();
+	if (renderMode) updatePieces();
 	update();
     }
 }
@@ -547,7 +547,7 @@ void BoardWidget::showMove(const Move& mm, int step, bool updateGUI)
     }
 
     if (updateGUI) {
-	if (renderMode) updateBalls();
+	if (renderMode) updatePieces();
 	update();
     }
 }
@@ -590,7 +590,7 @@ void BoardWidget::showStart(const Move& m, int step, bool updateGUI)
     }
 
     if (updateGUI) {
-	if (renderMode) updateBalls();
+	if (renderMode) updatePieces();
 	update();
     }
 }
@@ -860,7 +860,7 @@ void BoardWidget::mousePressEvent( QMouseEvent* pEvent )
 
 	oldPos = pos;
 
-	if (renderMode) updateBalls();
+	if (renderMode) updatePieces();
 	update();
 
 	return;
@@ -899,7 +899,7 @@ void BoardWidget::mouseMoveEvent( QMouseEvent* pEvent )
 	    else if (field[f] == Board::color1)  field[f] = Board::color1bright;
 	    else if (field[f] == Board::color2)  field[f] = Board::color2bright;
 
-	    if (renderMode) updateBalls();
+	    if (renderMode) updatePieces();
 	    update();
 	}
 	return;
@@ -955,7 +955,7 @@ void BoardWidget::mouseMoveEvent( QMouseEvent* pEvent )
 	}
 	else {
 
-	    if (renderMode) updateBalls();
+	    if (renderMode) updatePieces();
 	    update();
 	}
 	emit updateSpy(tmp);
@@ -986,7 +986,7 @@ void BoardWidget::mouseReleaseEvent( QMouseEvent* pEvent )
 	color1Count = board.getColor1Count();
 	color2Count = board.getColor2Count();
 
-	if (renderMode) updateBalls();
+	if (renderMode) updatePieces();
 	update();
 
 	emit edited(vState);
@@ -1029,7 +1029,7 @@ TestGame::TestGame(Network* n) : w(b), _n(n)
     connect(&w, SIGNAL(moveChoosen(Move&)), SLOT(draw(Move&)));
     connect(n, SIGNAL(gotPosition(const char*)),
 	    SLOT(newPosition(const char*)));
-    w.renderBalls(true);
+    w.renderPieces(true);
     w.show();
 }
 

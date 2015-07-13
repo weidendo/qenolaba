@@ -29,23 +29,23 @@
 #include <QWidget>
 #include <QList>
 
-/* textures for balls */
+/* textures for pieces */
 #define TEX_FLAT   0
 #define TEX_RIPPLE 1
 
-class Ball {
+class Piece {
 
 public:
     static void setSpecials(double z, double f, double l)
     { zoom = z, flip=f, limit=l; }
 
-    Ball(const QColor& c, double a = 0.0, int t=TEX_RIPPLE );
-    ~Ball();
+    Piece(const QColor& c, double a = 0.0, int t=TEX_RIPPLE );
+    ~Piece();
 
     QPixmap* pixmap();
 
     double angle() { return an; }
-    QColor ballColor() { return bColor; }
+    QColor pieceColor() { return bColor; }
 
     static int w() { return sizeX; }
     static int h() { return sizeY; }
@@ -69,20 +69,20 @@ private:
     double an, sina, cosa;
     int tex;
 
-    Ball *next;
-    static Ball* first;
+    Piece *next;
+    static Piece* first;
 
     static double zoom, flip, limit;
 };
 
 
-class BallAnimation {
+class PieceAnimation {
 public:
-    BallAnimation(int s, Ball*, Ball*);
-    ~BallAnimation();
+    PieceAnimation(int s, Piece*, Piece*);
+    ~PieceAnimation();
 
     int steps;
-    QList<Ball*> balls;
+    QList<Piece*> pieces;
 };
 
 #define ANIMATION_STOPPED 0
@@ -91,28 +91,28 @@ public:
 #define ANIMATION_LOOP    3
 #define ANIMATION_CYCLE   4
 
-class BallPosition {
+class PiecePosition {
 public:
-    BallPosition(int xp,int yp, Ball* d);
+    PiecePosition(int xp,int yp, Piece* d);
 
     int x, y, actStep, actDir, actType;
-    Ball* def;
-    BallAnimation* actAnimation;
+    Piece* def;
+    PieceAnimation* actAnimation;
 };
 
 #define MAX_POSITION  130
 #define MAX_ANIMATION  20
 
-class BallWidget : public QWidget
+class PieceWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    BallWidget(int _freq, int bFr, QWidget *parent = 0);
-    ~BallWidget();
+    PieceWidget(int _freq, int bFr, QWidget *parent = 0);
+    ~PieceWidget();
 
-    void createBlending(int, int, Ball* , Ball* );
-    void createBallPosition(int, int x, int y, Ball*);
+    void createBlending(int, int, Piece* , Piece* );
+    void createPiecePosition(int, int x, int y, Piece*);
 
     void startAnimation(int pos, int anim, int type=ANIMATION_FORWARD);
     void stopAnimation(int pos);
@@ -125,30 +125,30 @@ signals:
     void animationsFinished(void);
 
 protected:
-    void drawBalls(QPainter*);
+    void drawPieces(QPainter*);
 
 private slots:
     void animate();
 
 protected:
-    QVector<BallPosition*> positions;
-    QVector<BallAnimation*> animations;
+    QVector<PiecePosition*> positions;
+    QVector<PieceAnimation*> animations;
 
 private:
     int freq;
-    int xStart, yStart, realSize, ballFraction;
+    int xStart, yStart, realSize, pieceFraction;
     bool isRunning;
     QTimer *timer;
 };
 
 
-/* Ball Test */
+/* Piece Rendering Test */
 
-class BallTest: public BallWidget
+class PieceTest: public PieceWidget
 {
     Q_OBJECT
 public:
-    BallTest(QWidget *parent=0);
+    PieceTest(QWidget *parent=0);
 protected:
     void mousePressEvent( QMouseEvent * );
     void mouseReleaseEvent( QMouseEvent * );

@@ -31,15 +31,14 @@
 
 #include "Piece.h"
 
-Ball* Ball::first = 0;
-//QImage Ball::back;
-int Ball::sizeX, Ball::sizeY;
-double Ball::lightX, Ball::lightY, Ball::lightZ;
-QColor Ball::lightColor;
-double Ball::rippleCount, Ball::rippleDepth;
+Piece* Piece::first = 0;
+int Piece::sizeX, Piece::sizeY;
+double Piece::lightX, Piece::lightY, Piece::lightZ;
+QColor Piece::lightColor;
+double Piece::rippleCount, Piece::rippleDepth;
 
-/* set global Ball parameter */
-void Ball::setSize(int x, int y)
+/* set global Piece parameter */
+void Piece::setSize(int x, int y)
 {
     sizeX = x;
     sizeY = y;
@@ -47,16 +46,16 @@ void Ball::setSize(int x, int y)
     invalidate();
 }
 
-void Ball::invalidate()
+void Piece::invalidate()
 {
-    Ball *b;
+    Piece *b;
 
-    /* invalidate all Balls... */
+    /* invalidate all Pieces... */
     for(b=first;b!=0;b=b->next)
 	b->pm = QPixmap(0,0);
 }
 
-void Ball::setLight(int x, int y, int z, const QColor& c)
+void Piece::setLight(int x, int y, int z, const QColor& c)
 {
     double len = sqrt(double(x*x + y*y + z*z));
 
@@ -70,7 +69,7 @@ void Ball::setLight(int x, int y, int z, const QColor& c)
 }
 
 
-void Ball::setTexture(double c, double d)
+void Piece::setTexture(double c, double d)
 {
     rippleCount = c;
     rippleDepth = d;
@@ -79,11 +78,11 @@ void Ball::setTexture(double c, double d)
 }
 
 // default static setting
-double Ball::zoom = 1.05;
-double Ball::flip = 2.0;
-double Ball::limit = 0;
+double Piece::zoom = 1.05;
+double Piece::flip = 2.0;
+double Piece::limit = 0;
 
-Ball::Ball(const QColor& c, double a, int t)
+Piece::Piece(const QColor& c, double a, int t)
 {
     if (first ==0) {
 	sizeX = sizeY = -1;
@@ -101,9 +100,9 @@ Ball::Ball(const QColor& c, double a, int t)
     first = this;
 }
 
-Ball::~Ball()
+Piece::~Piece()
 {
-    Ball* b;
+    Piece* b;
 
     if (first == this)
 	first = next;
@@ -115,14 +114,14 @@ Ball::~Ball()
     }
 }
 
-QPixmap* Ball::pixmap()
+QPixmap* Piece::pixmap()
 {
     if (pm.isNull() && sizeX>0 && sizeY>0)
 	render();
     return &pm;
 }
 
-void Ball::render()
+void Piece::render()
 {
     int x,y;
     double xx,yy,zz, ll,lll, red,green,blue;
@@ -141,7 +140,7 @@ void Ball::render()
 	for(x=0;x<sizeX;x++) {
 	    xx = (2.*x-sizeX)/(sizeX-2) *zoom;
 
-	    /* Change only if inside the ball */
+	    /* Change only if inside the Piece */
 	    zz = 1 - (xx*xx + yy*yy);
 
 	    if (zz>flip) zz=2*flip-zz;
@@ -170,7 +169,7 @@ void Ball::render()
 		//	printf("x %f, y %f, z %f : ll %f lll %f\n", xx,yy,zz,ll,lll);
 
 
-		/* mix ball+light */
+		/* mix Piece+light */
 		red   = lll * lightColor.red() +   (1-lll) * bColor.red();
 		green = lll * lightColor.green() + (1-lll) * bColor.green();
 		blue  = lll * lightColor.blue() +  (1-lll) * bColor.blue();
@@ -192,16 +191,16 @@ void Ball::render()
 }
 
 
-/* Class BallAnimation */
+/* Class PieceAnimation */
 
-BallAnimation::BallAnimation(int s, Ball* ball1, Ball* ball2)
+PieceAnimation::PieceAnimation(int s, Piece* piece1, Piece* piece2)
 {
-    QColor c1 = ball1->ballColor();
-    double a1 = ball1->angle();
+    QColor c1 = piece1->pieceColor();
+    double a1 = piece1->angle();
     int r1 = c1.red(), g1 = c1.green(), b1 = c1.blue();
 
-    QColor c2 = ball2->ballColor();
-    double a2 = ball2->angle();
+    QColor c2 = piece2->pieceColor();
+    double a2 = piece2->angle();
     int r2 = c2.red(), g2 = c2.green(), b2 = c2.blue();
 
     QColor c;
@@ -211,26 +210,26 @@ BallAnimation::BallAnimation(int s, Ball* ball1, Ball* ball2)
     steps = s;
     s--;
 
-    balls.append( new Ball( c1,a1 ) );
+    pieces.append( new Piece( c1,a1 ) );
 
     for(i=1; i< s; i++) {
 	c.setRgb( r1+(r2-r1)*i/s, g1+(g2-g1)*i/s, b1+(b2-b1)*i/s );
 	a = a1+(a2-a1)*i/s;
 
-	balls.append( new Ball( c,a ) );
+	pieces.append( new Piece( c,a ) );
     }
 
-    balls.append( new Ball( c2,a2 ) );
+    pieces.append( new Piece( c2,a2 ) );
 }
 
-BallAnimation::~BallAnimation()
+PieceAnimation::~PieceAnimation()
 {
-    qDeleteAll(balls);
+    qDeleteAll(pieces);
 }
 
 
-/* Class BallPosition */
-BallPosition::BallPosition(int xp,int yp, Ball* d)
+/* Class PiecePosition */
+PiecePosition::PiecePosition(int xp,int yp, Piece* d)
 {
     x=xp;
     y=yp;
@@ -241,9 +240,9 @@ BallPosition::BallPosition(int xp,int yp, Ball* d)
 }
 
 
-/*  Class BallWidget */
+/*  Class PieceWidget */
 
-BallWidget::BallWidget( int _freq, int bFr, QWidget *parent )
+PieceWidget::PieceWidget( int _freq, int bFr, QWidget *parent )
     : QWidget(parent), positions(MAX_POSITION), animations(MAX_ANIMATION)
 {
     int i;
@@ -256,43 +255,43 @@ BallWidget::BallWidget( int _freq, int bFr, QWidget *parent )
 
     freq = _freq;
     isRunning = false;
-    ballFraction = bFr;
+    pieceFraction = bFr;
     realSize = -1;
     timer = new QTimer(this);
     connect( timer, SIGNAL(timeout()), SLOT(animate()) );
 }
 
-BallWidget::~BallWidget()
+PieceWidget::~PieceWidget()
 {
     if (timer !=0)
 	delete timer;
 }
 
-void BallWidget::createBlending(int no, int s, Ball* b1, Ball* b2)
+void PieceWidget::createBlending(int no, int s, Piece* b1, Piece* b2)
 {
     if (no<0 || no>= MAX_ANIMATION) return;
 
     if (animations[no] !=0)
 	delete animations[no];
 
-    animations[no] = new BallAnimation(s,b1,b2);
+    animations[no] = new PieceAnimation(s,b1,b2);
 }
 
 
 /* X, Y are coordinates in a virtual 1000x1000 area */
-void BallWidget::createBallPosition(int no, int x, int y, Ball* def)
+void PieceWidget::createPiecePosition(int no, int x, int y, Piece* def)
 {
     if (no<0 || no>= MAX_POSITION) return;
 
     if (positions[no] !=0)
 	delete positions[no];
 
-    positions[no] = new BallPosition(x,y, def);
+    positions[no] = new PiecePosition(x,y, def);
 }
 
-void BallWidget::startAnimation(int pos, int anim, int type)
+void PieceWidget::startAnimation(int pos, int anim, int type)
 {
-    BallPosition *p;
+    PiecePosition *p;
 
     if (pos<0 || pos>=MAX_POSITION || positions[pos]==0) return;
     if (anim<0 || anim>=MAX_ANIMATION || animations[anim]==0) return;
@@ -313,9 +312,9 @@ void BallWidget::startAnimation(int pos, int anim, int type)
 }
 
 /* If LOOP: Set to ONESHOT, otherwise set to last frame */
-void BallWidget::stopAnimation(int pos)
+void PieceWidget::stopAnimation(int pos)
 {
-    BallPosition *p;
+    PiecePosition *p;
 
     if (pos<0 || pos>=MAX_POSITION || positions[pos]==0) return;
 
@@ -333,26 +332,26 @@ void BallWidget::stopAnimation(int pos)
     p->actStep = p->actAnimation->steps;
 }
 
-void BallWidget::resizeEvent(QResizeEvent *)
+void PieceWidget::resizeEvent(QResizeEvent *)
 {
     int w = width() *10/12, h = height();
 
     realSize = (w>h) ? h:w;
 
-    Ball::setSize( realSize/ballFraction, realSize/ballFraction );
+    Piece::setSize( realSize/pieceFraction, realSize/pieceFraction );
     update();
 }
 
-void BallWidget::paintEvent(QPaintEvent *)
+void PieceWidget::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    drawBalls(&p);
+    drawPieces(&p);
 }
 
-void BallWidget::drawBalls(QPainter* painter)
+void PieceWidget::drawPieces(QPainter* painter)
 {
     int i;
-    BallPosition *pos;
+    PiecePosition *pos;
     int xReal, yReal;
 
     int w = width(), h = height();
@@ -363,8 +362,8 @@ void BallWidget::drawBalls(QPainter* painter)
 	pos = positions.at(i);
 	if (pos==0) continue;
 
-	xReal = (w + pos->x * realSize / 500 - Ball::w() )/2;
-	yReal = (h + pos->y * realSize / 500 - Ball::h() )/2;
+	xReal = (w + pos->x * realSize / 500 - Piece::w() )/2;
+	yReal = (h + pos->y * realSize / 500 - Piece::h() )/2;
 
 	if (pos->actAnimation==0 || pos->actStep==-1) {
 	    if (pos->def !=0 ) {
@@ -375,18 +374,18 @@ void BallWidget::drawBalls(QPainter* painter)
 	    int s = pos->actStep;
 	    if (s>= pos->actAnimation->steps)
 		s = pos->actAnimation->steps-1;
-	    Ball* b = pos->actAnimation->balls.at(s);
+	    Piece* b = pos->actAnimation->pieces.at(s);
 	    painter->drawPixmap( xReal, yReal, *b->pixmap() );
 	}
     }
 }
 
-void BallWidget::animate()
+void PieceWidget::animate()
 {
     bool doAnimation = false;
 
     int i;
-    BallPosition *p;
+    PiecePosition *p;
     int xReal, yReal;
 
     int w = width(), h = height();
@@ -424,15 +423,15 @@ void BallWidget::animate()
 	    doAnimation = true;
 	}
 
-	xReal = (w + p->x * realSize / 500 - Ball::w() )/2;
-	yReal = (h + p->y * realSize / 500 - Ball::h() )/2;
+	xReal = (w + p->x * realSize / 500 - Piece::w() )/2;
+	yReal = (h + p->y * realSize / 500 - Piece::h() )/2;
 
 	if (p->actAnimation==0 || p->actStep==-1) {
 	    if (p->def !=0 )
-		update( xReal, yReal, Ball::w()+1, Ball::h()+1);
+		update( xReal, yReal, Piece::w()+1, Piece::h()+1);
 	}
 	else
-	    update( xReal, yReal, Ball::w()+1, Ball::h()+1);
+	    update( xReal, yReal, Piece::w()+1, Piece::h()+1);
 
     }
     if (!doAnimation) {
@@ -446,44 +445,44 @@ void BallWidget::animate()
 }
 
 
-/* Test Ball widget */
+/* Test Piece widget */
 
 /* Include test into regular compilation to moc happy */
-BallTest::BallTest( QWidget *parent )
-    : BallWidget(10,2,parent)
+PieceTest::PieceTest( QWidget *parent )
+    : PieceWidget(10,2,parent)
 {
     int w,h;
 
     w = h = 500;
     resize(w,h);
-    //Ball::setSize( w/2, h/2, this );
+    //Piece::setSize( w/2, h/2, this );
 
-    Ball *b1 = new Ball( Qt::green );
-    Ball *b2 = new Ball( Qt::yellow );
-    Ball *b3 = new Ball( Qt::red );
-    Ball *b4 = new Ball( Qt::red, 3.14/2 );
+    Piece *b1 = new Piece( Qt::green );
+    Piece *b2 = new Piece( Qt::yellow );
+    Piece *b3 = new Piece( Qt::red );
+    Piece *b4 = new Piece( Qt::red, 3.14/2 );
 
     createBlending(0,5,b1,b2);
-    createBallPosition( 0, -250, -250, b1);
+    createPiecePosition( 0, -250, -250, b1);
 
     createBlending(1,10,b1,b3);
-    createBallPosition(1, -250, 250, b1);
+    createPiecePosition(1, -250, 250, b1);
 
     createBlending(2,15,b3,b2);
-    createBallPosition( 2, 250, -250, b3);
+    createPiecePosition( 2, 250, -250, b3);
 
     createBlending(3,20,b3,b4);
-    createBallPosition(3, 250, 250, b3);
+    createPiecePosition(3, 250, 250, b3);
 }
 
 /*
-void BallTest::paintEvent( QPaintEvent * )
+void PieceTest::paintEvent( QPaintEvent * )
 {
   bitBlt(this,0,0, b.pixmap());
 }
 */
 
-void BallTest::mousePressEvent( QMouseEvent * )
+void PieceTest::mousePressEvent( QMouseEvent * )
 {
     startAnimation(0,0, ANIMATION_CYCLE);
     startAnimation(1,1);
@@ -491,7 +490,7 @@ void BallTest::mousePressEvent( QMouseEvent * )
     startAnimation(3,3, ANIMATION_LOOP);
 }
 
-void BallTest::mouseReleaseEvent( QMouseEvent * )
+void PieceTest::mouseReleaseEvent( QMouseEvent * )
 {
     stopAnimation(0);
     stopAnimation(1);
@@ -500,17 +499,17 @@ void BallTest::mouseReleaseEvent( QMouseEvent * )
 
 #ifdef PIECE_TEST
 
-/* Test Ball widget */
+/* Test Piece widget */
 
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     // set zoom, flip, limit
-    Ball::setSpecials(.52, .85, .75);
+    Piece::setSpecials(.52, .85, .75);
 
     QApplication app(argc, argv);
-    BallTest top;
+    PieceTest top;
 
     top.show();
     return app.exec();

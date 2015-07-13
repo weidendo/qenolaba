@@ -782,7 +782,7 @@ void indent(int d)
 /** validState
  *
  * Check for a valid board position to play from:
- * (1) Number of balls for each color has to be between 9 and 14
+ * (1) Number of pieces for each color has to be between 9 and 14
  * (2) There must be a move possible for actual color
  */
 int Board::validState()
@@ -1081,7 +1081,7 @@ int Board::search(int depth, int alpha, int beta)
 
 	playMove(m);
 	if (!isValid()) {
-	    /* Possibility (1) to win: Ball Count <9 */
+	    /* Possibility (1) to win: Piece Count <9 */
 	    value = 14999-depth;
 	    //  value = ((depth < maxDepth) ? 15999:14999) - depth;
 #ifdef MYTRACE
