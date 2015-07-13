@@ -44,6 +44,7 @@ public:
 
 public slots:
   void newGame();
+  void about();
   void depthSet(QAction*);
   void draw(Move& m);
   void draw();
@@ -59,6 +60,7 @@ private:
   QAction *_newAction, *_quitAction, *_startAction;
   QAction *_redAction, *_yellowAction;
   QAction *_d1Action, *_d2Action, *_d3Action, *_d4Action;
+  QAction *_aboutAction;
   QActionGroup* _depthGroup;
   QStatusBar* _statusbar;
   QLabel* _statusLabel;

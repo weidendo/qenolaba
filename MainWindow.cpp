@@ -26,6 +26,7 @@
 #include <QMenu>
 #include <QToolBar>
 #include <QTimer>
+#include <QMessageBox>
 
 MainWindow::MainWindow(Network *n)
 {
@@ -80,7 +81,6 @@ void MainWindow::createActions()
     _startAction->setShortcut(tr("Ctrl+S"));
     _startAction->setStatusTip(tr("Red side about to start the game"));
 
-
     _redAction = new QAction(tr("Computer plays &Red"), this);
     _redAction->setCheckable(true);
     _redAction->setShortcut(tr("Ctrl+R"));
@@ -115,6 +115,12 @@ void MainWindow::createActions()
     a->setChecked(true);
     connect(_depthGroup, SIGNAL(triggered(QAction*)),
 	    SLOT(depthSet(QAction*)));
+
+    // help menu actions
+    _aboutAction = new QAction(tr("&About Qenolaba..."), this);
+    _aboutAction->setStatusTip(tr("Show the application's About box"));
+    connect(_aboutAction, SIGNAL(triggered()), this, SLOT(about()));
+
 }
 
 void MainWindow::createMenu()
@@ -135,6 +141,9 @@ void MainWindow::createMenu()
     optionMenu->addAction(_d2Action);
     optionMenu->addAction(_d3Action);
     optionMenu->addAction(_d4Action);
+
+    QMenu* helpMenu = mBar->addMenu(tr("&Help"));
+    helpMenu->addAction(_aboutAction);
 }
 
 void MainWindow::createToolbar()
@@ -194,6 +203,23 @@ void MainWindow::newGame()
     _board->begin(_startAction->isChecked() ? Board::color1 : Board::color2);
     if (_network) _network->broadcast(_board);
     initInput();
+}
+
+void MainWindow::about()
+{
+    QString text, version;
+    version = QLatin1String("0.1");
+    text = QString("<h3>Qenolaba %1</h3>").arg(version);
+    text += tr("<p>Qenolaba is inspired by a famous board game with "
+	       "hexagonal grid. It has a computer player and network "
+	       "connectivity (just try to run it twice).</p>"
+	       "<p>Qenolaba is open-source, and it is distributed under the "
+	       "terms of the GPL v2.</p>"
+	       "Author: "
+	       "<a href=\"mailto:Josef.Weidendorfer@gmx.de\">"
+	       "Josef Weidendorfer</a>");
+
+    QMessageBox::about(this, tr("About Qenolaba"), text);
 }
 
 void MainWindow::depthSet(QAction* a)
