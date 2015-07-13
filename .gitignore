@@ -1,0 +1,5 @@
+*.o
+moc_*.cpp
+Makefile
+qenolaba.pro.user
+qenolaba
