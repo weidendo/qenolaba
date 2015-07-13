@@ -46,6 +46,7 @@ public:
 
 
 class QSocketNotifier;
+class Board;
 
 class Network: public QObject
 {
@@ -59,8 +60,10 @@ public:
     ~Network();
 
     bool isOK() { return (fd>=0); }
+    void addListener(const char* addr);
     void addListener(const char* host, int port);
     void broadcast(const char* pos);
+    void broadcast(Board* b);
 
 signals:
     void gotPosition(const char* pos);

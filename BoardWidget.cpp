@@ -1024,15 +1024,11 @@ QSize  BoardWidget::sizeHint() const
 
 #include "Network.h"
 
-TestGame::TestGame(Network* n)
-    : w(b)
+TestGame::TestGame(Network* n) : w(b), _n(n)
 {
-    _n = n;
-
     connect(&w, SIGNAL(moveChoosen(Move&)), SLOT(draw(Move&)));
     connect(n, SIGNAL(gotPosition(const char*)),
 	    SLOT(newPosition(const char*)));
-
     w.renderBalls(true);
     w.show();
 }
@@ -1040,8 +1036,6 @@ TestGame::TestGame(Network* n)
 void TestGame::initInput()
 {
     qDebug("%s", qPrintable(b.getState()));
-    qDebug() << "Evaluation:" << b.calcEvaluation();
-
     b.generateMoves(l);
     w.choseMove(&l);
     w.updatePosition(true);
@@ -1052,7 +1046,7 @@ void TestGame::startOnEmpty()
     if (b.isValid()) return;
 
     b.begin(Board::color1);
-    if (_n) _n->broadcast(qPrintable(b.getState()));
+    if (_n) _n->broadcast(&b);
     initInput();
 }
 
@@ -1060,7 +1054,7 @@ void TestGame::draw(Move& m)
 {
     if (m.isValid()) {
 	b.playMove(m);
-	if (_n) _n->broadcast(qPrintable(b.getState()));
+	if (_n) _n->broadcast(&b);
     }
     initInput();
 }
@@ -1083,8 +1077,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     Network n;
     TestGame g(&n);
-
-    // if not received a position from network we start ourself
+    if (argc>1) n.addListener(argv[1]);
     QTimer::singleShot(1000, &g, SLOT(startOnEmpty()));
 
     return app.exec();

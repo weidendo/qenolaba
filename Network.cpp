@@ -24,6 +24,7 @@
  */
 
 #include "Network.h"
+#include "Board.h"      // for broadcast(Board*)
 
 #include <unistd.h>
 #include <stdio.h>
@@ -199,7 +200,7 @@ void Network::addListener(const char* host, int port)
     sin.sin_port = htons(port);
     hostinfo = gethostbyname (host);
     if (hostinfo == NULL) {
-	qDebug ("Error in addListener: Unknown host %s.\n", host);
+	qDebug ("Error in addListener: Unknown host '%s'.\n", host);
 	return;
     }
     sin.sin_addr = *(struct in_addr *) hostinfo->h_addr;
@@ -225,6 +226,21 @@ void Network::addListener(const char* host, int port)
     }
 }
 
+void Network::addListener(const char *a)
+{
+    QString host = QString("127.0.0.1");
+    int port = defaultPort;
+    QString addr(a);
+    int sep = addr.indexOf(':');
+    if (sep>0)
+	host = addr.mid(0,sep);
+    if (sep>=0)
+	port = addr.mid(sep+1).toInt();
+    else
+	host = addr;
+    addListener(host.toUtf8().constData(), port);
+}
+
 void Network::broadcast(const char* pos)
 {
     static char tmp[1024];
@@ -239,6 +255,11 @@ void Network::broadcast(const char* pos)
     sentLen = len;
 }
 
+void Network::broadcast(Board *b)
+{
+    broadcast(qPrintable(b->getState()));
+}
+
 bool Network::sendString(struct sockaddr_in sin, const char* str, int len)
 {
     int s = ::socket (PF_INET, SOCK_STREAM, 0);
@@ -251,7 +272,15 @@ bool Network::sendString(struct sockaddr_in sin, const char* str, int len)
 	       ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port) );
 	return false;
     }
-    write(s, str, len);
+    while(len>0) {
+	int written = write(s, str, len);
+	if (written <= 0) {
+	    qDebug("sendString: Error in write\n");
+	    break;
+	}
+	str += written;
+	len -= written;
+    }
     close(s);
     //  qDebug("Send '%s' to 0x%x:%d\n", str,
     //	 ntohl(sin.sin_addr.s_addr), ntohs(sin.sin_port) );
