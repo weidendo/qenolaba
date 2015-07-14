@@ -1390,8 +1390,8 @@ bool Board::setState(const QString& state)
     while(++index<len) {
 	c = state[index].toLatin1();
 	if ((c == '-') || (c == '\n')) break;
-	if (c == 'O') newColor = 1; break;
-	if (c == 'X') newColor = 2; break;
+	if (c == 'O') { newColor = 1; break; }
+	if (c == 'X') { newColor = 2; break; }
     }
     // if color not given, assume that O started the game
     if (newColor != 0)
